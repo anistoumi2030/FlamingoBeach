@@ -1,0 +1,72 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: #0f172a;
+  --color-foreground: #ffffff;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #334155;
+  --color-ring: #60a5fa;
+  --color-card: #1e293b;
+  --color-card-foreground: #ffffff;
+  --radius: 0.625rem;
+  --radius-sm: calc(0.625rem - 4px);
+  --radius-md: calc(0.625rem - 2px);
+  --radius-lg: 0.625rem;
+  --radius-xl: calc(0.625rem + 4px);
+}
+
+:root {
+  --background: #0f172a;
+  --foreground: #ffffff;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #334155;
+  --ring: #60a5fa;
+  --card: #1e293b;
+  --card-foreground: #ffffff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+    background-attachment: fixed;
+  }
+}
+
+/* Professional gradient utilities */
+@layer utilities {
+  .gradient-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+  }
+  
+  .gradient-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  }
+  
+  .gradient-text {
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .glass-effect {
+    background: rgba(30, 41, 59, 0.7);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
