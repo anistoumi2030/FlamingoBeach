@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -191,7 +191,7 @@ const footerLinks: Record<string, { label: string; href: string }[]> = {
 };
 
 /* ─── Component ─── */
-export default function HomePage() {
+function HomePageContent() {
   const [destination, setDestination] = useState("");
   const [type, setType] = useState("");
   const [date, setDate] = useState("");
@@ -569,6 +569,14 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Chargement…</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }
 

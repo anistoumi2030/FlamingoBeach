@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "FlamingoBeach.com.tn | Réservation plages privées & restaurants",
@@ -27,6 +20,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "data:;",
   },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+  },
 };
 
 export default function RootLayout({
@@ -36,7 +33,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${inter.variable} antialiased bg-white text-gray-800`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <style>{`
+          :root {
+            --font-inter: 'Inter', sans-serif;
+          }
+        `}</style>
+      </head>
+      <body className="antialiased bg-white text-gray-800" style={{ fontFamily: "var(--font-inter)" }}>
         {children}
         <Toaster />
       </body>

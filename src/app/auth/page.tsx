@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { FlamingoLogo } from "@/components/FlamingoLogo";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, X, KeyRound } from "lucide-react";
 import Link from "next/link";
 
-export default function AuthPage() {
+function AuthPageContent() {
   const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -215,9 +215,9 @@ export default function AuthPage() {
             </div>
           </div>
         </main>
-      </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-emerald-50">
@@ -484,5 +484,19 @@ export default function AuthPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Chargement…
+        </div>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
   );
 }

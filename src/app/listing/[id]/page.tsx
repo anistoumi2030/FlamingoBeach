@@ -122,9 +122,10 @@ const listings = [
     description:
       "Paillote pieds dans l'eau avec espace lounge, musique d'ambiance et cocktail bar. L'endroit parfait pour une journée festive entre amis.",
   },
-  {
-    id: 6,
-    location: "Ghar El Melh, Bizerte",
+   {
+     id: 6,
+     title: "Cabane Sur Sable",
+     location: "Ghar El Melh, Bizerte",
     type: "Cabane",
     price: 70,
     priceUnit: "Par Adulte",

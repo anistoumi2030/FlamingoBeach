@@ -116,13 +116,13 @@ export default function FaqPage() {
   const partnerFaqs = [
     {
       id: "partner-1",
-      question: "Comment devenir partenaire sur CoucouBeach ?",
+      question: "Comment devenir partenaire sur FlamingoBeach ?",
       answer: "Rendez-vous sur notre page \"Devenir partenaire\" et remplissez le formulaire d'inscription. L'inscription est entièrement gratuite, sans frais cachés ni coûts d'entrée."
     },
     {
       id: "partner-2",
       question: "Quelles sont les commissions appliquées ?",
-      answer: "CoucouBeach prélève une commission de 10% sur le montant de chaque réservation confirmée. Cette commission couvre la promotion de votre établissement, le traitement des réservations et le support technique."
+      answer: "FlamingoBeach prélève une commission de 10% sur le montant de chaque réservation confirmée. Cette commission couvre la promotion de votre établissement, le traitement des réservations et le support technique."
     },
     {
       id: "partner-3",
@@ -137,7 +137,7 @@ export default function FaqPage() {
     {
       id: "partner-5",
       question: "Qui collecte le paiement des clients ?",
-      answer: "CoucouBeach collecte directement les paiements des clients au moment de leur réservation. Vous n'avez pas à gérer les transactions financières avec les clients."
+      answer: "FlamingoBeach collecte directement les paiements des clients au moment de leur réservation. Vous n'avez pas à gérer les transactions financières avec les clients."
     },
     {
       id: "partner-6",
@@ -248,7 +248,7 @@ export default function FaqPage() {
                 <div className="prose prose-lg max-w-none text-gray-500 leading-relaxed">
                   <p>
                     Bienvenue dans notre section d'aide ! Vous trouverez ici les réponses aux questions les plus courantes concernant l'utilisation de{" "}
-                    <strong className="text-primary">CoucouBeach</strong>
+                    <strong className="text-primary">FlamingoBeach</strong>
                     , que vous soyez client cherchant à réserver ou partenaire souhaitant proposer vos services.
                   </p>
                   <p>
