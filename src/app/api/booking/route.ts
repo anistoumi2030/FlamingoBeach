@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
-
-const usersFile = join(process.cwd(), "data", "users.json");
+import { findUserByEmail } from "@/lib/user-store";
 
 export async function POST(request: Request) {
   try {
@@ -19,18 +16,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const tokenEmail = authHeader.replace("Bearer ", "").trim().toLowerCase();
-    if (!tokenEmail || !existsSync(usersFile)) {
+    const tokenEmail = authHeader.replace("Bearer ", "").trim();
+
+    if (!tokenEmail) {
       return NextResponse.json(
         { ok: false, error: "Session invalide" },
         { status: 401 }
       );
     }
 
-    const users = JSON.parse(readFileSync(usersFile, "utf-8"));
-    const user = users.find(
-      (u: any) => u.email.toLowerCase() === tokenEmail
-    );
+    // Verify user via Supabase or file storage
+    const user = await findUserByEmail(tokenEmail);
 
     if (!user) {
       return NextResponse.json(

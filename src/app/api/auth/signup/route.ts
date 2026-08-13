@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
-
-const usersFile = join(process.cwd(), "data", "users.json");
+import { createUser, sanitizeUser } from "@/lib/user-store";
 
 export async function POST(request: Request) {
   try {
@@ -22,35 +19,18 @@ export async function POST(request: Request) {
       );
     }
 
-    let users: any[] = [];
-    if (existsSync(usersFile)) {
-      users = JSON.parse(readFileSync(usersFile, "utf-8"));
+    try {
+      const newUser = await createUser(name, email, password);
+      return NextResponse.json({ ok: true, user: sanitizeUser(newUser) });
+    } catch (err: any) {
+      if (err.message === "User already exists") {
+        return NextResponse.json(
+          { ok: false, error: "Un compte existe déjà avec cet email" },
+          { status: 409 }
+        );
+      }
+      throw err;
     }
-
-    const existingUser = users.find(
-      (u: any) => u.email.toLowerCase() === email.toLowerCase()
-    );
-
-    if (existingUser) {
-      return NextResponse.json(
-        { ok: false, error: "Un compte existe déjà avec cet email" },
-        { status: 409 }
-      );
-    }
-
-    const newUser = {
-      id: Date.now().toString(),
-      name,
-      email,
-      password,
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-    writeFileSync(usersFile, JSON.stringify(users, null, 2));
-
-    const { password: _password, ...safeUser } = newUser;
-    return NextResponse.json({ ok: true, user: safeUser });
   } catch (error) {
     console.error("Signup error:", error);
     return NextResponse.json(

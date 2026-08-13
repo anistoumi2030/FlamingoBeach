@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
+import { updateUserPassword } from "@/lib/user-store";
 
-const usersFile = join(process.cwd(), "data", "users.json");
 const resetTokensFile = join(process.cwd(), "data", "reset-tokens.json");
 
 export async function POST(request: Request) {
@@ -34,20 +34,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Token expiré. Veuillez refaire une demande." }, { status: 400 });
     }
 
-    if (!existsSync(usersFile)) {
-      return NextResponse.json({ ok: false, error: "Erreur interne" }, { status: 500 });
-    }
+    // Update password in Supabase or file
+    const success = await updateUserPassword(tokenData.email, newPassword);
 
-    const users = JSON.parse(readFileSync(usersFile, "utf-8"));
-    const userIndex = users.findIndex((u: any) => u.email.toLowerCase() === tokenData.email.toLowerCase());
-
-    if (userIndex === -1) {
+    if (!success) {
       return NextResponse.json({ ok: false, error: "Utilisateur introuvable" }, { status: 404 });
     }
 
-    users[userIndex].password = newPassword;
-    writeFileSync(usersFile, JSON.stringify(users, null, 2));
-
+    // Invalidate the token
     delete tokens[token];
     writeFileSync(resetTokensFile, JSON.stringify(tokens, null, 2));
 

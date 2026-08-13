@@ -51,6 +51,7 @@
     "lucide-react": "latest",
     "next": "latest",
     "nodemailer": "^9.0.3",
+    "pg": "^8.23.0",
     "postcss": "latest",
     "prisma": "5.22.0",
     "react": "latest",

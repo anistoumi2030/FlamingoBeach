@@ -14,20 +14,24 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id @default(uuid()) @map("id")
+  email     String   @unique @map("email")
+  name      String?  @map("name")
+  password  String   @map("password")
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  @@map("users")
 }
 
 model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id @default(uuid()) @map("id")
+  title     String   @map("title")
+  content   String?  @map("content")
+  published Boolean  @default(false) @map("published")
+  authorId  String   @map("authorId")
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  @@map("posts")
 }

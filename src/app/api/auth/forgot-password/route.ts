@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 import nodemailer from "nodemailer";
+import { findUserByEmail } from "@/lib/user-store";
 
-const usersFile = join(process.cwd(), "data", "users.json");
 const resetTokensFile = join(process.cwd(), "data", "reset-tokens.json");
 
 function getResetTokens(): Record<string, { email: string; expires: string }> {
@@ -35,14 +35,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Email requis" }, { status: 400 });
     }
 
-    if (!existsSync(usersFile)) {
-      return NextResponse.json({ ok: true, message: "Si cet email existe, un lien de réinitialisation a été envoyé." });
-    }
-
-    const users = JSON.parse(readFileSync(usersFile, "utf-8"));
-    const user = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
+    // Check if user exists (works with both Supabase and file storage)
+    const user = await findUserByEmail(email);
 
     if (!user) {
+      // Return same message for security (don't reveal if email exists)
       return NextResponse.json({ ok: true, message: "Si cet email existe, un lien de réinitialisation a été envoyé." });
     }
 
