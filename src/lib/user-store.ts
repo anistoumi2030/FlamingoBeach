@@ -5,9 +5,11 @@
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
+import bcrypt from "bcryptjs";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 const usersFile = join(process.cwd(), "data", "users.json");
+const SALT_ROUNDS = 10;
 
 function isSupabaseConfigured(): boolean {
   return !!(
@@ -60,15 +62,19 @@ async function createUserInSupabase(
   name: string,
   email: string,
   password: string
-): Promise<any | null> {
+): Promise<any> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase) {
+    throw new Error("Supabase n'est pas configuré");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
   const newUser = {
     id: crypto.randomUUID(),
     name,
     email,
-    password,
+    password: hashedPassword,
     createdAt: new Date().toISOString(),
   };
 
@@ -80,7 +86,9 @@ async function createUserInSupabase(
 
   if (error) {
     console.error("Supabase createUser error:", error.message);
-    return null;
+    throw new Error(
+      `Erreur lors de la création du compte dans Supabase : ${error.message}`
+    );
   }
   return data;
 }
@@ -92,9 +100,11 @@ async function updateUserPasswordInSupabase(
   const supabase = getSupabaseAdmin();
   if (!supabase) return false;
 
+  const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
   const { error } = await supabase
     .from("users")
-    .update({ password: newPassword })
+    .update({ password: hashedPassword })
     .ilike("email", email);
 
   if (error) {
@@ -117,30 +127,19 @@ export async function authenticateUser(
   email: string,
   password: string
 ): Promise<any | null> {
+  let user: any | null = null;
+
   if (isSupabaseConfigured()) {
-    const supabase = getSupabaseAdmin();
-    if (!supabase) return null;
-
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .ilike("email", email)
-      .eq("password", password)
-      .single();
-
-    if (error || !data) {
-      return null;
-    }
-    return data;
+    user = await findUserInSupabase(email);
+  } else {
+    user = findUserInFile(email);
   }
 
-  const users = readUsersFromFile();
-  const user = users.find(
-    (u: any) =>
-      u.email.toLowerCase() === email.toLowerCase() &&
-      u.password === password
-  );
-  return user || null;
+  if (!user) return null;
+
+  // Compare the provided password with the stored (hashed) password
+  const valid = await bcrypt.compare(password, user.password);
+  return valid ? user : null;
 }
 
 export async function createUser(
@@ -160,11 +159,12 @@ export async function createUser(
 
   // File-based fallback
   const users = readUsersFromFile();
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
   const newUser = {
     id: Date.now().toString(),
     name,
     email,
-    password,
+    password: hashedPassword,
     createdAt: new Date().toISOString(),
   };
   users.push(newUser);
@@ -186,7 +186,7 @@ export async function updateUserPassword(
     (u: any) => u.email.toLowerCase() === email.toLowerCase()
   );
   if (!user) return false;
-  user.password = newPassword;
+  user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
   writeUsersToFile(users);
   return true;
 }

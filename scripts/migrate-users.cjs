@@ -7,6 +7,8 @@
 const { Pool } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const bcrypt = require("bcryptjs");
+const SALT_ROUNDS = 10;
 
 // Read .env file for DATABASE_URL
 let connectionString;
@@ -66,6 +68,8 @@ async function main() {
 
     for (const user of users) {
       try {
+        // Hash the password before storing (bcrypt)
+        const hashedPassword = await bcrypt.hash(user.password, SALT_ROUNDS);
         await pool.query(
           `INSERT INTO users (id, name, email, password, "createdAt")
            VALUES ($1, $2, $3, $4, $5)
@@ -74,7 +78,7 @@ async function main() {
              password = EXCLUDED.password,
              "createdAt" = EXCLUDED."createdAt"
            RETURNING email`,
-          [user.id, user.name, user.email, user.password, user.createdAt]
+          [user.id, user.name, user.email, hashedPassword, user.createdAt]
         );
         console.log(`  ✓ ${user.email}`);
         migrated++;

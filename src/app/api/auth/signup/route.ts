@@ -29,7 +29,16 @@ export async function POST(request: Request) {
           { status: 409 }
         );
       }
-      throw err;
+      // Erreur Supabase (table manquante, colonne manquante, etc.)
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            err.message ||
+            "Erreur lors de la création du compte. Vérifiez que la table 'users' existe dans Supabase avec la colonne 'password'.",
+        },
+        { status: 500 }
+      );
     }
   } catch (error) {
     console.error("Signup error:", error);
