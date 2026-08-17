@@ -52,24 +52,73 @@ Type : ${listing?.type || ""}`;
 
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
-    if (smtpUser && smtpPass) {
-      const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: { user: smtpUser, pass: smtpPass },
-      });
 
+    // Email est obligatoire - si SMTP non configuré, renvoyer une erreur claire
+    if (!smtpUser || !smtpPass) {
+      console.error("[BOOKING EMAIL] SMTP non configuré - SMTP_USER ou SMTP_PASS manquant");
+      return NextResponse.json(
+        { ok: false, error: "Configuration email manquante sur le serveur" },
+        { status: 500 }
+      );
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+
+    // Email de notification au propriétaire
+    try {
       await transporter.sendMail({
         from: process.env.SMTP_FROM || smtpUser,
         to: "EMAIL_PROPRIÉTAIRE_(PRIVÉ)",
         subject: `Nouvelle réservation - ${listing?.title || ""} - ${date}`,
         text: content,
       });
+    } catch (mailError) {
+      console.error("[BOOKING EMAIL] Erreur d'envoi au propriétaire:", mailError);
+      return NextResponse.json(
+        { ok: false, error: "Erreur lors de l'envoi de l'email de réservation" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ ok: true, message: "Réservation enregistrée" });
+    // Email de confirmation au client
+    const clientContent = `Bonjour ${name},
+
+Votre réservation sur CoucouBeach a bien été enregistrée. Voici le récapitulatif :
+
+Hébergement : ${listing?.title || ""}
+Localisation : ${listing?.location || ""}
+Type : ${listing?.type || ""}
+Date : ${date}
+Personnes : ${guests}
+Prix par adulte : ${listing?.price ?? 0} TND
+Total : ${(listing?.price ?? 0) * Number(guests)} TND
+
+Merci de votre confiance !
+L'équipe CoucouBeach`;
+
+    try {
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || smtpUser,
+        to: email,
+        subject: `Confirmation de réservation - ${listing?.title || ""} - ${date}`,
+        text: clientContent,
+      });
+    } catch (mailError) {
+      console.error("[BOOKING EMAIL] Erreur d'envoi au client:", mailError);
+      return NextResponse.json(
+        { ok: false, error: "Erreur lors de l'envoi de l'email de confirmation au client" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, message: "Réservation enregistrée et emails envoyés" });
   } catch (error) {
+    console.error("[BOOKING] Erreur:", error);
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
   }
 }

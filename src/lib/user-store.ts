@@ -49,13 +49,13 @@ async function findUserInSupabase(email: string): Promise<any | null> {
     .from("users")
     .select("*")
     .ilike("email", email)
-    .single();
+    .limit(1);
 
   if (error) {
     console.error("Supabase findUser error:", error.message);
     return null;
   }
-  return data;
+  return data?.[0] ?? null;
 }
 
 async function createUserInSupabase(
@@ -118,7 +118,11 @@ async function updateUserPasswordInSupabase(
 
 export async function findUserByEmail(email: string): Promise<any | null> {
   if (isSupabaseConfigured()) {
-    return findUserInSupabase(email);
+    const user = await findUserInSupabase(email);
+    if (user) return user;
+    // Fallback to file-based storage if the user isn't in Supabase
+    // (covers accounts created before Supabase was configured).
+    return findUserInFile(email);
   }
   return findUserInFile(email);
 }
