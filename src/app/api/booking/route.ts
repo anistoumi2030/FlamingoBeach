@@ -67,10 +67,13 @@ Type : ${listing?.type || ""}`;
       port: 587,
       secure: false,
       requireTLS: true,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       auth: { user: smtpUser, pass: smtpPass },
     });
 
-    // Email de notification au propriétaire
+    // Email de notification au propriétaire (best-effort, ne bloque pas la réservation)
     try {
       await transporter.sendMail({
         from: process.env.SMTP_FROM || smtpUser,
@@ -78,15 +81,12 @@ Type : ${listing?.type || ""}`;
         subject: `Nouvelle réservation - ${listing?.title || ""} - ${date}`,
         text: content,
       });
+      console.log("[BOOKING EMAIL] Email au propriétaire envoyé avec succès");
     } catch (mailError) {
-      console.error("[BOOKING EMAIL] Erreur d'envoi au propriétaire:", mailError);
-      return NextResponse.json(
-        { ok: false, error: "Erreur lors de l'envoi de l'email de réservation" },
-        { status: 500 }
-      );
+      console.error("[BOOKING EMAIL] Erreur d'envoi au propriétaire (non bloquant):", mailError);
     }
 
-    // Email de confirmation au client
+    // Email de confirmation au client (best-effort, ne bloque pas la réservation)
     const clientContent = `Bonjour ${name},
 
 Votre réservation sur CoucouBeach a bien été enregistrée. Voici le récapitulatif :
@@ -109,15 +109,12 @@ L'équipe CoucouBeach`;
         subject: `Confirmation de réservation - ${listing?.title || ""} - ${date}`,
         text: clientContent,
       });
+      console.log("[BOOKING EMAIL] Email de confirmation au client envoyé avec succès");
     } catch (mailError) {
-      console.error("[BOOKING EMAIL] Erreur d'envoi au client:", mailError);
-      return NextResponse.json(
-        { ok: false, error: "Erreur lors de l'envoi de l'email de confirmation au client" },
-        { status: 500 }
-      );
+      console.error("[BOOKING EMAIL] Erreur d'envoi au client (non bloquant):", mailError);
     }
 
-    return NextResponse.json({ ok: true, message: "Réservation enregistrée et emails envoyés" });
+    return NextResponse.json({ ok: true, message: "Réservation enregistrée" });
   } catch (error) {
     console.error("[BOOKING] Erreur:", error);
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
