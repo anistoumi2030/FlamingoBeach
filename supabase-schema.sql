@@ -58,12 +58,17 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Post" ENABLE ROW LEVEL SECURITY;
 
 -- Politiques RLS de base
--- Lecture : tout le monde peut lire (nécessaire pour l'authentification via service role)
--- Écriture : autorisée (le service role bypass RLS de toute façon)
+-- Lecture : tout le monde peut lire (nécessaire pour l'authentification)
 CREATE POLICY "Users can read all users" ON users FOR SELECT USING (true);
-CREATE POLICY "Users can insert their own data" ON users FOR INSERT WITH CHECK (true);
-CREATE POLICY "Users can update their own data" ON users FOR UPDATE USING (true);
 
+-- Insertion : validation par email (fonctionne avec la clé anon ou service role)
+-- Cette politique permet la création de nouveaux utilisateurs via l'API
+CREATE POLICY "Insert users with email validation" ON users FOR INSERT WITH CHECK (email = auth.email());
+
+-- Mise à jour : les utilisateurs peuvent mettre à jour leurs propres données
+CREATE POLICY "Users can update their own data" ON users FOR UPDATE USING (email = auth.email());
+
+-- Politiques pour la table Post
 CREATE POLICY "Anyone can read published posts" ON "Post" FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can create posts" ON "Post" FOR INSERT WITH CHECK (true);
 CREATE POLICY "Authors can update their own posts" ON "Post" FOR UPDATE USING ("authorId" = auth.uid()::text);
