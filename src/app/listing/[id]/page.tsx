@@ -205,6 +205,11 @@ export default function ListingDetailPage() {
     email: string;
     name: string;
   } | null>(null);
+  const [emailStatus, setEmailStatus] = useState<{
+    owner: boolean;
+    client: boolean;
+  } | null>(null);
+  const [isBooking, setIsBooking] = useState(false);
 
   // Check if user is logged in
   useEffect(() => {
@@ -225,6 +230,7 @@ export default function ListingDetailPage() {
   useEffect(() => {
     setIsSubmitted(false);
     setBookingData(null);
+    setEmailStatus(null);
     setName("");
     setEmail("");
     setPassword("");
@@ -262,7 +268,7 @@ export default function ListingDetailPage() {
   }
 
   const handleSubmit = async () => {
-    if (!currentUser) return;
+    if (!currentUser || isBooking) return;
 
     const payload = {
       name: currentUser.name || name,
@@ -278,8 +284,17 @@ export default function ListingDetailPage() {
       },
     };
 
+    // Show confirmation immediately (optimistic UI)
+    setBookingData(payload as any);
+    setIsSubmitted(true);
+    setEmail("");
+    setPassword("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Fire the API call in the background — no need to block the UI
+    setIsBooking(true);
     try {
-      await fetch("/api/booking", {
+      const res = await fetch("/api/booking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -287,20 +302,24 @@ export default function ListingDetailPage() {
         },
         body: JSON.stringify(payload),
       });
-    } catch {
-      // silent fail
-    }
 
-    setBookingData(payload as any);
-    setIsSubmitted(true);
-    setEmail("");
-    setPassword("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+      if (res.ok) {
+        const data = await res.json();
+        setEmailStatus(data.emailsSent || null);
+      } else {
+        setEmailStatus(null);
+      }
+    } catch {
+      setEmailStatus(null);
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   const handleNewBooking = () => {
     setIsSubmitted(false);
     setBookingData(null);
+    setEmailStatus(null);
     setName("");
     setEmail("");
     setPassword("");
@@ -358,7 +377,7 @@ export default function ListingDetailPage() {
                   </span>
                 )}
                 <button
-                  className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-md"
+                  className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-md cursor-pointer"
                   aria-label="Ajouter aux favoris"
                 >
                   <Heart className="w-4 h-4 text-gray-600" />
@@ -371,7 +390,7 @@ export default function ListingDetailPage() {
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
+                    className={`relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all cursor-pointer ${
                       idx === selectedImage
                         ? "border-emerald-500 shadow-md"
                         : "border-transparent hover:border-gray-300"
@@ -480,13 +499,13 @@ export default function ListingDetailPage() {
                 <div className="space-y-3">
                   <Link
                     href="/auth?mode=login"
-                    className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 text-center shadow-md hover:shadow-lg"
+                    className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 text-center shadow-md hover:shadow-lg cursor-pointer"
                   >
                     Se connecter
                   </Link>
                   <Link
                     href="/auth?mode=signup"
-                    className="block w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-all duration-200 text-center"
+                    className="block w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-all duration-200 text-center cursor-pointer"
                   >
                     Créer un compte
                   </Link>
@@ -522,19 +541,36 @@ export default function ListingDetailPage() {
                     <span className="font-bold text-emerald-700">{listing.price * Number(bookingData.guests)} TND</span>
                   </div>
                 </div>
-                <p className="text-gray-400 text-xs mb-6">
-                  Un email de confirmation vous sera envoyé sous peu. Notre équipe vous contactera pour finaliser votre réservation.
-                </p>
+                {emailStatus?.client ? (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-6 text-left">
+                    <p className="text-sm text-emerald-700 font-medium flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Un email de confirmation vous a été envoyé à {bookingData.email}.
+                    </p>
+                    <p className="text-xs text-emerald-600 mt-1">
+                      Notre équipe vous contactera également pour finaliser votre réservation.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-left">
+                    <p className="text-sm text-amber-700 font-medium">
+                      Votre réservation a bien été enregistrée. L'envoi du email de confirmation est en cours de traitement.
+                    </p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Notre équipe vous contactera bientôt pour finaliser votre réservation.
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-3">
                   <Link
                     href="/"
-                    className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 text-center"
+                    className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 text-center cursor-pointer"
                   >
                     Retour à l'accueil
                   </Link>
                   <button
                     onClick={handleNewBooking}
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-all duration-200"
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-all duration-200 cursor-pointer"
                   >
                     Nouvelle réservation
                   </button>
@@ -635,9 +671,20 @@ export default function ListingDetailPage() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
+                  disabled={isBooking}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer disabled:opacity-60 disabled:cursor-wait disabled:active:scale-100"
                 >
-                  Réserver maintenant
+                  {isBooking ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Confirmation en cours...
+                    </span>
+                  ) : (
+                    "Réserver maintenant"
+                  )}
                 </button>
 
                 <p className="text-xs text-gray-400 text-center">

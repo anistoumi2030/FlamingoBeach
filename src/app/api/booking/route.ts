@@ -2,6 +2,155 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { findUserByEmail } from "@/lib/user-store";
 
+/**
+ * Envoie un email par le biais d'une API HTTPS (Resend, Brevo, etc.)
+ * Ces API utilisent le port 443 qui n'est pas bloqué, contrairement au SMTP.
+ */
+async function sendEmailViaHttpApi(
+  to: string,
+  subject: string,
+  text: string
+): Promise<boolean> {
+  // Méthode 1 : Resend
+  const resendKey = process.env.RESEND_API_KEY;
+  if (resendKey) {
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${resendKey}`,
+        },
+        body: JSON.stringify({
+          from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+          to: [to],
+          subject,
+          text,
+        }),
+      });
+      if (res.ok) {
+        console.log(`[BOOKING EMAIL] Email envoyé via Resend → ${to}`);
+        return true;
+      }
+      console.error(
+        "[BOOKING EMAIL] Resend échec:",
+        res.status,
+        await res.text()
+      );
+    } catch (e) {
+      console.error("[BOOKING EMAIL] Resend erreur:", e);
+    }
+  }
+
+  // Méthode 2 : Brevo (Sendinblue)
+  const brevoKey = process.env.BREVO_API_KEY;
+  if (brevoKey) {
+    try {
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": brevoKey,
+        },
+        body: JSON.stringify({
+          sender: {
+            name: "Coucou Beach",
+            email: process.env.EMAIL_FROM || "EMAIL_SMTP_(PRIVÉ)",
+          },
+          to: [{ email: to }],
+          subject,
+          textContent: text,
+        }),
+      });
+      if (res.ok) {
+        console.log(`[BOOKING EMAIL] Email envoyé via Brevo → ${to}`);
+        return true;
+      }
+      console.error(
+        "[BOOKING EMAIL] Brevo échec:",
+        res.status,
+        await res.text()
+      );
+    } catch (e) {
+      console.error("[BOOKING EMAIL] Brevo erreur:", e);
+    }
+  }
+
+  // Méthode 3 : SendGrid
+  const sendgridKey = process.env.SENDGRID_API_KEY;
+  if (sendgridKey) {
+    try {
+      const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sendgridKey}`,
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: to }] }],
+          from: {
+            email: process.env.EMAIL_FROM || "EMAIL_SMTP_(PRIVÉ)",
+            name: "Coucou Beach",
+          },
+          subject,
+          content: [{ type: "text/plain", value: text }],
+        }),
+      });
+      if (res.ok) {
+        console.log(`[BOOKING EMAIL] Email envoyé via SendGrid → ${to}`);
+        return true;
+      }
+      console.error(
+        "[BOOKING EMAIL] SendGrid échec:",
+        res.status,
+        await res.text()
+      );
+    } catch (e) {
+      console.error("[BOOKING EMAIL] SendGrid erreur:", e);
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Envoie un email par SMTP Gmail (utile quand le déploiement a un accès SMTP).
+ */
+async function sendEmailViaSmtp(
+  to: string,
+  subject: string,
+  content: string
+): Promise<boolean> {
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  if (!smtpUser || !smtpPass) return false;
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || smtpUser,
+      to,
+      subject,
+      text: content,
+    });
+    console.log(`[BOOKING EMAIL] Email envoyé via SMTP → ${to}`);
+    return true;
+  } catch (mailError) {
+    console.error("[BOOKING EMAIL] SMTP erreur (non bloquant):", mailError);
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -50,43 +199,16 @@ Type : ${listing?.type || ""}`;
 
     console.log("[BOOKING EMAIL]", content);
 
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    const ownerEmail = process.env.OWNER_EMAIL || "EMAIL_PROPRIÉTAIRE_(PRIVÉ)";
 
-    // Email est obligatoire - si SMTP non configuré, renvoyer une erreur claire
-    if (!smtpUser || !smtpPass) {
-      console.error("[BOOKING EMAIL] SMTP non configuré - SMTP_USER ou SMTP_PASS manquant");
-      return NextResponse.json(
-        { ok: false, error: "Configuration email manquante sur le serveur" },
-        { status: 500 }
-      );
-    }
+    // Email de notification au propriétaire — Resend en premier (rapide, timeout court)
+    const ownerSent = await sendEmailViaHttpApi(
+      ownerEmail,
+      `Nouvelle réservation - ${listing?.title || ""} - ${date}`,
+      content
+    );
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
-
-    // Email de notification au propriétaire (best-effort, ne bloque pas la réservation)
-    try {
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || smtpUser,
-        to: "EMAIL_PROPRIÉTAIRE_(PRIVÉ)",
-        subject: `Nouvelle réservation - ${listing?.title || ""} - ${date}`,
-        text: content,
-      });
-      console.log("[BOOKING EMAIL] Email au propriétaire envoyé avec succès");
-    } catch (mailError) {
-      console.error("[BOOKING EMAIL] Erreur d'envoi au propriétaire (non bloquant):", mailError);
-    }
-
-    // Email de confirmation au client (best-effort, ne bloque pas la réservation)
+    // Email de confirmation au client
     const clientContent = `Bonjour ${name},
 
 Votre réservation sur CoucouBeach a bien été enregistrée. Voici le récapitulatif :
@@ -102,19 +224,20 @@ Total : ${(listing?.price ?? 0) * Number(guests)} TND
 Merci de votre confiance !
 L'équipe CoucouBeach`;
 
-    try {
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || smtpUser,
-        to: email,
-        subject: `Confirmation de réservation - ${listing?.title || ""} - ${date}`,
-        text: clientContent,
-      });
-      console.log("[BOOKING EMAIL] Email de confirmation au client envoyé avec succès");
-    } catch (mailError) {
-      console.error("[BOOKING EMAIL] Erreur d'envoi au client (non bloquant):", mailError);
-    }
+    const clientSent = await sendEmailViaHttpApi(
+      email,
+      `Confirmation de réservation - ${listing?.title || ""} - ${date}`,
+      clientContent
+    );
 
-    return NextResponse.json({ ok: true, message: "Réservation enregistrée" });
+    return NextResponse.json({
+      ok: true,
+      message: "Réservation enregistrée",
+      emailsSent: {
+        owner: ownerSent,
+        client: clientSent,
+      },
+    });
   } catch (error) {
     console.error("[BOOKING] Erreur:", error);
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });

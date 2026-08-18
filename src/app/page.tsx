@@ -312,7 +312,7 @@ function HomePageContent() {
                   </span>
                   <button
                     onClick={handleLogout}
-                    className="text-white/70 hover:text-white transition-colors text-sm font-medium flex items-center gap-1"
+                    className="text-white/70 hover:text-white transition-colors text-sm font-medium flex items-center gap-1 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     Déconnexion
@@ -343,7 +343,7 @@ function HomePageContent() {
             </nav>
 
             {/* Mobile menu button */}
-            <button className="sm:hidden text-white" aria-label="Menu">
+            <button className="sm:hidden text-white cursor-pointer" aria-label="Menu">
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -434,7 +434,7 @@ function HomePageContent() {
               {/* Search button */}
               <button
                 onClick={handleSearch}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 font-medium text-sm transition-colors min-w-[140px]"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 font-medium text-sm transition-colors min-w-[140px] cursor-pointer"
               >
                 <Search className="w-4 h-4" />
                 Rechercher
@@ -639,7 +639,7 @@ function ListingCard({
         {/* Favorite button */}
         <button
           onClick={() => setIsFavorite(!isFavorite)}
-          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors cursor-pointer"
           aria-label="Ajouter aux favoris"
         >
           <Heart

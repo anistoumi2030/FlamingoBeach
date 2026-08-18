@@ -207,7 +207,7 @@ function AuthPageContent() {
                 <button
                   type="submit"
                   disabled={resetLoading}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {resetLoading ? "Réinitialisation..." : "Réinitialiser mon mot de passe"}
                 </button>
@@ -323,7 +323,7 @@ function AuthPageContent() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                     aria-label={showPassword ? "Cacher le mot de passe" : "Afficher le mot de passe"}
                   >
                     {showPassword ? (
@@ -346,7 +346,7 @@ function AuthPageContent() {
                       setForgotSent(false);
                       setShowForgotModal(true);
                     }}
-                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors cursor-pointer"
                   >
                     Mot de passe oublié ?
                   </button>
@@ -355,7 +355,7 @@ function AuthPageContent() {
 
               <button
                 type="submit"
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer"
               >
                 {isLogin ? "Se connecter" : "Créer mon compte"}
               </button>
@@ -373,7 +373,7 @@ function AuthPageContent() {
 
             {/* Social buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+              <button className="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -394,7 +394,7 @@ function AuthPageContent() {
                 </svg>
                 Google
               </button>
-              <button className="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+              <button className="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
@@ -408,7 +408,7 @@ function AuthPageContent() {
               <button
                 type="button"
                 onClick={toggleMode}
-                className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
+                className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors cursor-pointer"
               >
                 {isLogin ? "S'inscrire" : "Se connecter"}
               </button>
@@ -424,7 +424,7 @@ function AuthPageContent() {
             <button
               type="button"
               onClick={() => setShowForgotModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
               aria-label="Fermer"
             >
               <X className="w-5 h-5" />
@@ -450,7 +450,7 @@ function AuthPageContent() {
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
+                  className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors cursor-pointer"
                 >
                   Retour à la connexion
                 </button>
@@ -474,7 +474,7 @@ function AuthPageContent() {
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {forgotLoading ? "Envoi en cours..." : "Envoyer le lien"}
                 </button>
