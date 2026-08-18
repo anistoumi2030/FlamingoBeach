@@ -157,11 +157,13 @@ export async function createUser(
     throw new Error("User already exists");
   }
 
+  // Always use Supabase when configured (including on Vercel)
+  // File-based fallback is only for local development without Supabase
   if (isSupabaseConfigured()) {
     return createUserInSupabase(name, email, password);
   }
 
-  // File-based fallback
+  // File-based fallback for local development only
   const users = readUsersFromFile();
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
   const newUser = {
