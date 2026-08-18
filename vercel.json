@@ -1,6 +1,12 @@
 {
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://bbszoxbwulsnijrslooh.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "SUPABASE_ANON_KEY_(RÉVOQUÉ)"
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "SUPABASE_ANON_KEY_(RÉVOQUÉ)",
+    "RESEND_API_KEY": "",
+    "BREVO_API_KEY": "",
+    "SENDGRID_API_KEY": "",
+    "EMAIL_FROM": "EMAIL_PROPRIÉTAIRE_(PRIVÉ)",
+    "SMTP_USER": "",
+    "SMTP_PASS": ""
   }
 }
