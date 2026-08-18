@@ -6,7 +6,7 @@
     "BREVO_API_KEY": "",
     "SENDGRID_API_KEY": "",
     "EMAIL_FROM": "EMAIL_PROPRIÉTAIRE_(PRIVÉ)",
-    "SMTP_USER": "",
+    "SMTP_USER": "EMAIL_PROPRIÉTAIRE_(PRIVÉ)",
     "SMTP_PASS": ""
   }
 }
