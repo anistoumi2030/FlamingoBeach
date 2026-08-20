@@ -55,7 +55,7 @@ async function sendEmailViaHttpApi(
         body: JSON.stringify({
           sender: {
             name: "Coucou Beach",
-            email: process.env.EMAIL_FROM || "EMAIL_SMTP_(PRIVÉ)",
+            email: process.env.EMAIL_FROM || process.env.SMTP_USER,
           },
           to: [{ email: to }],
           subject,
@@ -89,7 +89,7 @@ async function sendEmailViaHttpApi(
         body: JSON.stringify({
           personalizations: [{ to: [{ email: to }] }],
           from: {
-            email: process.env.EMAIL_FROM || "EMAIL_SMTP_(PRIVÉ)",
+            email: process.env.EMAIL_FROM || process.env.SMTP_USER,
             name: "Coucou Beach",
           },
           subject,
@@ -199,7 +199,7 @@ Type : ${listing?.type || ""}`;
 
     console.log("[BOOKING EMAIL]", content);
 
-    const ownerEmail = process.env.OWNER_EMAIL || "EMAIL_PROPRIÉTAIRE_(PRIVÉ)";
+    const ownerEmail = process.env.OWNER_EMAIL || process.env.SMTP_USER;
 
     // Email de notification au propriétaire — Resend en premier (rapide, timeout court)
     const ownerSent = await sendEmailViaHttpApi(

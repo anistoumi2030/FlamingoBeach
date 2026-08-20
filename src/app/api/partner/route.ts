@@ -32,7 +32,7 @@ Message : ${message || "Aucun message"}`;
 
       await transporter.sendMail({
         from: process.env.SMTP_FROM || smtpUser,
-        to: "EMAIL_PROPRIÉTAIRE_(PRIVÉ)",
+        to: process.env.OWNER_EMAIL || smtpUser,
         subject: `Nouvelle demande de partenariat - ${companyName}`,
         text: content,
       });

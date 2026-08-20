@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     const resetUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/auth?mode=login&resetToken=${token}`;
 
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || "Coucou Beach <EMAIL_SMTP_(PRIVÉ)>",
+      from: process.env.SMTP_FROM || `Coucou Beach <${process.env.SMTP_USER}>`,
       to: user.email,
       subject: "Réinitialisation de votre mot de passe - Coucou Beach",
       html: `
