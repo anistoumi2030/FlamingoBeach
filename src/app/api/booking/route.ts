@@ -3,13 +3,84 @@ import nodemailer from "nodemailer";
 import { findUserByEmail } from "@/lib/user-store";
 
 /**
+ * Génère le template HTML au format "Fiche Réservation"
+ * (uniquement les informations saisies par l'utilisateur).
+ */
+function buildBookingSheetHtml(data: {
+  clientName: string;
+  clientPhone: string;
+  clientEmail: string;
+  arrival: string;
+  listingTitle: string;
+  guests: string;
+  pricePerAdult: number;
+  total: number;
+}): string {
+  const row = (label: string, value: string) => `
+      <tr>
+        <td style="padding:10px 14px;border:1px solid #d1d5db;color:#1f2937;font-weight:bold;font-size:13px;width:45%;text-align:left;">${label}</td>
+        <td style="padding:10px 14px;border:1px solid #d1d5db;color:#111827;font-size:13px;">${value || "&nbsp;"}</td>
+      </tr>`;
+
+  const sectionHeader = (title: string, bg: string) => `
+      <tr>
+        <td colspan="2" style="padding:12px 14px;background:${bg};color:#ffffff;font-weight:bold;font-size:15px;letter-spacing:0.5px;text-align:center;">${title}</td>
+      </tr>`;
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8" /></head>
+<body style="margin:0;padding:24px;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;">
+    <!-- En-tête -->
+    <tr>
+      <td style="padding:20px 24px;border-bottom:3px solid #f97316;text-align:center;">
+        <span style="font-size:22px;font-weight:bold;color:#1f2937;letter-spacing:1px;">FICHE RÉSERVATION</span>
+      </td>
+    </tr>
+    <!-- Client -->
+    <tr>
+      <td style="padding:16px 24px 16px 24px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          ${sectionHeader("CLIENT", "#f05a28")}
+          ${row("NOM ET PRÉNOM", data.clientName)}
+          ${row("TÉLÉPHONE", data.clientPhone)}
+          ${row("E-MAIL", data.clientEmail)}
+        </table>
+      </td>
+    </tr>
+    <!-- Détails réservation -->
+    <tr>
+      <td style="padding:0 24px 24px 24px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          ${sectionHeader("DÉTAILS DE LA RÉSERVATION", "#1e3a5f")}
+          ${row("DATE", data.arrival)}
+          ${row("HÉBERGEMENT", data.listingTitle)}
+          ${row("NOMBRE DE PERSONNES", data.guests)}
+          ${row("PRIX PAR ADULTE", `${data.pricePerAdult} TND`)}
+          ${row("TOTAL", `<strong>${data.total} TND</strong>`)}
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 24px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;color:#6b7280;font-size:12px;">
+        Merci de votre confiance — L'équipe CoucouBeach
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+/**
  * Envoie un email par le biais d'une API HTTPS (Resend, Brevo, etc.)
  * Ces API utilisent le port 443 qui n'est pas bloqué, contrairement au SMTP.
  */
 async function sendEmailViaHttpApi(
   to: string,
   subject: string,
-  text: string
+  text: string,
+  html?: string
 ): Promise<boolean> {
   // Méthode 1 : Resend
   const resendKey = process.env.RESEND_API_KEY;
@@ -26,6 +97,7 @@ async function sendEmailViaHttpApi(
           to: [to],
           subject,
           text,
+          ...(html ? { html } : {}),
         }),
       });
       if (res.ok) {
@@ -60,6 +132,7 @@ async function sendEmailViaHttpApi(
           to: [{ email: to }],
           subject,
           textContent: text,
+          ...(html ? { htmlContent: html } : {}),
         }),
       });
       if (res.ok) {
@@ -93,7 +166,10 @@ async function sendEmailViaHttpApi(
             name: "Coucou Beach",
           },
           subject,
-          content: [{ type: "text/plain", value: text }],
+          content: [
+            { type: "text/plain", value: text },
+            ...(html ? [{ type: "text/html", value: html }] : []),
+          ],
         }),
       });
       if (res.ok) {
@@ -114,12 +190,13 @@ async function sendEmailViaHttpApi(
 }
 
 /**
- * Envoie un email par SMTP Gmail (utile quand le déploiement a un accès SMTP).
+ * Envoie un email par SMTP Gmail (fallback quand les API HTTPS échouent).
  */
 async function sendEmailViaSmtp(
   to: string,
   subject: string,
-  content: string
+  content: string,
+  html?: string
 ): Promise<boolean> {
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
@@ -142,6 +219,7 @@ async function sendEmailViaSmtp(
       to,
       subject,
       text: content,
+      ...(html ? { html } : {}),
     });
     console.log(`[BOOKING EMAIL] Email envoyé via SMTP → ${to}`);
     return true;
@@ -184,6 +262,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const total = (listing?.price ?? 0) * Number(guests);
+
     const content = `Nouvelle réservation sur CoucouBeach :
 
 Nom complet : ${name}
@@ -193,22 +273,46 @@ Hébergement : ${listing?.title || ""}
 Date : ${date}
 Personnes : ${guests}
 Prix par adulte : ${listing?.price ?? 0} TND
-Total : ${(listing?.price ?? 0) * Number(guests)} TND
+Total : ${total} TND
 Localisation : ${listing?.location || ""}
 Type : ${listing?.type || ""}`;
 
     console.log("[BOOKING EMAIL]", content);
 
+    // Données de la fiche — uniquement les informations saisies par l'utilisateur
+    const sheetData = {
+      clientName: name || "",
+      clientPhone: phone || "",
+      clientEmail: email || "",
+      arrival: date || "",
+      listingTitle: listing?.title || "",
+      guests: String(guests ?? ""),
+      pricePerAdult: listing?.price ?? 0,
+      total,
+    };
+
+    const ownerHtml = buildBookingSheetHtml(sheetData);
+    const clientHtml = buildBookingSheetHtml(sheetData);
+
     const ownerEmail = process.env.OWNER_EMAIL || process.env.SMTP_USER;
 
-    // Email de notification au propriétaire — Resend en premier (rapide, timeout court)
-    const ownerSent = await sendEmailViaHttpApi(
+    // Email de notification au propriétaire — API HTTPS puis fallback SMTP
+    let ownerSent = await sendEmailViaHttpApi(
       ownerEmail,
       `Nouvelle réservation - ${listing?.title || ""} - ${date}`,
-      content
+      content,
+      ownerHtml
     );
+    if (!ownerSent) {
+      ownerSent = await sendEmailViaSmtp(
+        ownerEmail,
+        `Nouvelle réservation - ${listing?.title || ""} - ${date}`,
+        content,
+        ownerHtml
+      );
+    }
 
-    // Email de confirmation au client
+    // Email de confirmation au client — API HTTPS puis fallback SMTP
     const clientContent = `Bonjour ${name},
 
 Votre réservation sur CoucouBeach a bien été enregistrée. Voici le récapitulatif :
@@ -219,16 +323,25 @@ Type : ${listing?.type || ""}
 Date : ${date}
 Personnes : ${guests}
 Prix par adulte : ${listing?.price ?? 0} TND
-Total : ${(listing?.price ?? 0) * Number(guests)} TND
+Total : ${total} TND
 
 Merci de votre confiance !
 L'équipe CoucouBeach`;
 
-    const clientSent = await sendEmailViaHttpApi(
+    let clientSent = await sendEmailViaHttpApi(
       email,
       `Confirmation de réservation - ${listing?.title || ""} - ${date}`,
-      clientContent
+      clientContent,
+      clientHtml
     );
+    if (!clientSent) {
+      clientSent = await sendEmailViaSmtp(
+        email,
+        `Confirmation de réservation - ${listing?.title || ""} - ${date}`,
+        clientContent,
+        clientHtml
+      );
+    }
 
     return NextResponse.json({
       ok: true,

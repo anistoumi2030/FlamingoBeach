@@ -5,6 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FlamingoLogo } from "@/components/FlamingoLogo";
+import DestinationsPopulaires from "@/components/DestinationsPopulaires";
+import QuestionsFrequentes from "@/components/QuestionsFrequentes";
+import RestaurantsPartenaires from "@/components/RestaurantsPartenaires";
 import {
   Search,
   MapPin,
@@ -170,6 +173,7 @@ const socialLinks = [
 const footerLinks: Record<string, { label: string; href: string }[]> = {
   DÉCOUVRIR: [
     { label: "Accueil", href: "/" },
+    { label: "Galerie", href: "/galerie" },
     { label: "Annonces", href: "#" },
     { label: "Blog", href: "#" },
     { label: "Contact", href: "/contact" },
@@ -335,6 +339,12 @@ function HomePageContent() {
                 </>
               )}
               <Link
+                href="/galerie"
+                className="text-white/70 hover:text-white transition-colors text-sm font-medium"
+              >
+                Galerie
+              </Link>
+              <Link
                 href="/partner"
                 className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
               >
@@ -490,6 +500,15 @@ function HomePageContent() {
             )}
           </div>
         </section>
+
+        {/* ─── RESTAURANTS PARTENAIRES ─── */}
+        <RestaurantsPartenaires />
+
+        {/* ─── DESTINATIONS POPULAIRES ─── */}
+        <DestinationsPopulaires />
+
+        {/* ─── QUESTIONS FREQUENTES ─── */}
+        <QuestionsFrequentes />
       </main>
 
       {/* ─── FOOTER ─── */}
